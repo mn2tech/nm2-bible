@@ -10,6 +10,20 @@ from openai import OpenAI
 col1, col2, col3 = st.columns([1, 2, 1])
 with col2:
     language = st.selectbox("🌐 Choose Language", ["English", "Hindi", "Spanish", "French"])
+    original_answer = response.choices[0].message.content.strip()
+
+    translated_answer = original_answer
+
+if language != "English":
+    translation_prompt = f"Translate this to {language}:\n\n{original_answer}"
+
+    translation_response = client.chat.completions.create(
+        model="gpt-3.5-turbo",
+        messages=[{"role": "user", "content": translation_prompt}],
+        temperature=0.3
+    )
+
+    translated_answer = translation_response.choices[0].message.content.strip()
 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
