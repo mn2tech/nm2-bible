@@ -1,6 +1,6 @@
 import streamlit as st
 import requests
-import openai
+from openai import OpenAI
 import os
 from dotenv import load_dotenv
 from PIL import Image
