@@ -7,6 +7,8 @@ from PIL import Image
 load_dotenv()
 from openai import OpenAI
 
+language = st.selectbox("🌐 Choose Language:", ["English", "Hindi", "Spanish", "French", "Telugu"])
+
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 st.set_page_config(page_title="NM2TECH AI Bible Assistant", page_icon="💻", layout="centered")
@@ -53,13 +55,13 @@ user_question = st.text_input("Ask about meaning, context, or interpretation:")
 
 if user_question:
     with st.spinner("Reflecting thoughtfully..."):
-        system_prompt = """
-You are a wise and compassionate AI Bible assistant. You answer questions about the Bible’s meaning, structure, authors, historical context, and spiritual themes. Be encouraging and clear.
+        system_prompt = f"""
+You are a wise and compassionate Bible assistant. Respond in {language}. Answer questions about the Bible’s meaning, structure, authors, context, and spiritual themes.
 """
         messages = [
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_question}
-        ]
+        ] 
         
         response = client.chat.completions.create(
             model="gpt-3.5-turbo",
