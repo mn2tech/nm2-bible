@@ -12,7 +12,7 @@ client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 logo = Image.open("nm2tech_logo.png")
 col1, col2, col3 = st.columns([1, 2, 1])
 with col2:
-    st.image(logo, use_column_width=False)
+    st.image(logo, use_container_width=False)
 
 # 🌐 Page Configuration
 st.set_page_config(page_title="NM2TECH AI Bible Assistant", page_icon="💻", layout="centered")
