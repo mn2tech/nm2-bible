@@ -30,6 +30,7 @@ version = st.selectbox("Choose Bible Version:", ["KJV", "ASV", "WEB"])
 verse_input = st.text_input("Enter a Bible reference (e.g. John 3:16, Psalm 23):")
 
 verse_lang = st.selectbox("🌍 Select Verse Language:", ["English", "Hindi", "Telugu"], key="verse_lang")
+
 if verse_input:
     with st.spinner("Searching for scripture..."):
         api_url = f"https://bible-api.com/{verse_input}?translation={version.lower()}"
@@ -44,7 +45,7 @@ if verse_input:
 
             if verse_lang != "English":
                 try:
-                    translation_prompt = f"Translate this Bible verse into {language}:\n\n{original_verse}"
+                    translation_prompt = f"Translate this Bible verse into {verse_lang}:\n\n{original_verse}"
                     translation_response = client.chat.completions.create(
                         model="gpt-3.5-turbo",
                         messages=[{"role": "user", "content": translation_prompt}],
@@ -55,12 +56,11 @@ if verse_input:
                     st.warning("⚠️ Translation failed. Showing verse in English.")
                     st.exception(e)
 
-            # 🌍 Show both versions
             st.markdown("**📝 English:**")
             st.write(original_verse)
 
-            if language != "English":
-                st.markdown(f"**🌐 {language}:**")
+            if verse_lang != "English":
+                st.markdown(f"**🌐 {verse_lang}:**")
                 st.write(translated_verse)
 
         else:
