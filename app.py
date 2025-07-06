@@ -70,12 +70,14 @@ st.divider()
 
 # 🧠 Section 2: GPT-Powered Q&A
 st.subheader("🤖 Ask a Bible Question")
+
+qa_lang = st.selectbox("🌍 Select Answer Language:", ["English", "Hindi", "Telugu"], key="qa_lang")
 user_question = st.text_input("Ask about meaning, context, or interpretation:")
 
 if user_question:
     with st.spinner("Reflecting thoughtfully..."):
         system_prompt = f"""
-You are a wise and compassionate AI Bible assistant. Respond clearly and faithfully in {language}.
+You are a wise and compassionate AI Bible assistant. Respond clearly and faithfully in {qa_lang}.
 You help users understand the Bible’s meaning, structure, authors, historical context, and spiritual themes.
 """
 
@@ -92,11 +94,10 @@ You help users understand the Bible’s meaning, structure, authors, historical 
             )
 
             original_answer = response.choices[0].message.content.strip()
-
-            # 🌍 Translate if needed
             translated_answer = original_answer
-            if language != "English":
-                translation_prompt = f"Translate this to {language}:\n\n{original_answer}"
+
+            if qa_lang != "English":
+                translation_prompt = f"Translate this to {qa_lang}:\n\n{original_answer}"
                 translation_response = client.chat.completions.create(
                     model="gpt-3.5-turbo",
                     messages=[{"role": "user", "content": translation_prompt}],
