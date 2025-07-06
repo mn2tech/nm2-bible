@@ -14,6 +14,10 @@ openai.api_key = os.getenv("OPENAI_API_KEY")
 
 from PIL import Image  # Only needed once
 st.image("nm2tech_logo.png", width=200)
+st.markdown("""
+        <h1 style='color:#003f63;'>💻 NM2TECH AI Bible Assistant</h1>
+        <p style='font-size:18px;'>Explore scripture or ask Bible-related questions using AI eg: Historical facts about bible</p>
+    """, unsafe_allow_html=True)
 st.set_page_config(
     page_title="📖 NM2TECH AI Bible Assistant",          # Shown in browser tab
     page_icon="📘",                           # Emoji or a custom .png/.ico path
