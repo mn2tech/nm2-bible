@@ -18,7 +18,7 @@ with col2:
 st.set_page_config(page_title="NM2TECH AI Bible Assistant", page_icon="💻", layout="centered")
 
 # 🎯 Language Selector
-language = st.selectbox("🌍 Choose Language:", ["English", "Hindi", "Spanish", "French"])
+language = st.selectbox("🌍 Choose Language:", ["English", "Hindi", "Telugu"])
 
 # 🧠 Page Header
 st.markdown("""
