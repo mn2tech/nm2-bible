@@ -23,6 +23,8 @@ from PIL import Image  # Only needed once
 logo = Image.open("nm2tech_logo.png")
 st.image(logo, width=160)  # Adjust width as needed
 st.title("📖 NM2TECH AI Bible Assistant")
+banner = Image.open("nm2tech_logo.png")
+st.image(banner, use_column_width=True)
 st.write("Explore scripture or ask Bible-related questions using AI.")
 
 # 📜 Section 1: Verse Lookup with Version Selection
