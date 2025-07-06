@@ -1,32 +1,23 @@
 import streamlit as st
 import requests
 import openai
-
-# 🔑 Your GPT Key
 import os
 from dotenv import load_dotenv
+from PIL import Image
 
-# 🔐 Load environment variables from .env file
 load_dotenv()
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-# ✅ Access your secret key safely
-openai.api_key = os.getenv("OPENAI_API_KEY")
-
-from PIL import Image  # Only needed once
-
-st.set_page_config(
-    page_title="📖 NM2TECH AI Bible Assistant",          # Shown in browser tab
-    page_icon="📘",                           # Emoji or a custom .png/.ico path
-    layout="centered"
-)
+st.set_page_config(page_title="NM2TECH AI Bible Assistant", page_icon="💻", layout="centered")
 
 logo = Image.open("nm2tech_logo.png")
 col1, col2, col3 = st.columns([1, 2, 1])
 with col2:
+    st.image(logo, use_container_width=False)
     st.image("nm2tech_logo.png", width=200)
     st.markdown("""
         <h1 style='color:#003f63;'>💻 NM2TECH AI Bible Assistant</h1>
-        <p style='font-size:18px;'>Explore scripture or ask Bible-related questions using AI eg: "Histocial fact abot bible"</p>
+        <p style='font-size:18px;'>Explore scripture or ask Bible-related questions using AI eg: "Intersting facts about bible"</p>
     """, unsafe_allow_html=True)
 
 # 📜 Section 1: Verse Lookup with Version Selection
