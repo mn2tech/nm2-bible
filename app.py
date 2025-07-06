@@ -18,7 +18,6 @@ st.set_page_config(
     layout="centered"
 )
 
-st.set_page_config(page_title="NM2TECH AI Bible Assistant", page_icon="📘")
 from PIL import Image  # Only needed once
 
 logo = Image.open("nm2tech_logo.png")
