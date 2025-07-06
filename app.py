@@ -73,6 +73,8 @@ st.divider()
 # 🧠 Section 2: GPT-Powered Q&A
 st.subheader("🤖 Ask a Bible Question")
 user_question = st.text_input("Ask about meaning, context, or interpretation:")
+col1, col2, col3 = st.columns([3, 1.2, 0.2])  # Adjust proportions to taste
+with col2:
 qa_lang = st.selectbox("🌍 Select Answer Language:", ["English", "Hindi", "Telugu"], key="qa_lang")
 
 if user_question:
