@@ -29,7 +29,7 @@ st.subheader("📜 Verse Lookup")
 version = st.selectbox("Choose Bible Version:", ["KJV", "ASV", "WEB"])
 verse_input = st.text_input("Enter a Bible reference (e.g. John 3:16, Psalm 23):")
 
-verse_lang = st.selectbox("🌍 Select Verse Language:", ["English", "Hindi", "Spanish", "French"], key="verse_lang")
+verse_lang = st.selectbox("🌍 Select Verse Language:", ["English", "Hindi", "Telugu"], key="verse_lang")
 if verse_input:
     with st.spinner("Searching for scripture..."):
         api_url = f"https://bible-api.com/{verse_input}?translation={version.lower()}"
