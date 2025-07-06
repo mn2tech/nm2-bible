@@ -1,12 +1,13 @@
 import streamlit as st
 import requests
-from openai import OpenAI
 import os
 from dotenv import load_dotenv
 from PIL import Image
 
 load_dotenv()
-OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+from openai import OpenAI
+
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 st.set_page_config(page_title="NM2TECH AI Bible Assistant", page_icon="💻", layout="centered")
 
@@ -59,7 +60,7 @@ You are a wise and compassionate AI Bible assistant. You answer questions about 
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_question}
         ]
-
+        
         response = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=messages,
