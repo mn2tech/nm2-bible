@@ -7,10 +7,6 @@ from PIL import Image
 load_dotenv()
 from openai import OpenAI
 
-col1, col2, col3 = st.columns([1, 2, 1])
-with col2:
-    language = st.selectbox("🌐 Choose Language", ["English", "Hindi", "Spanish", "French"])
-
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 st.set_page_config(page_title="NM2TECH AI Bible Assistant", page_icon="💻", layout="centered")
@@ -55,26 +51,19 @@ st.divider()
 st.subheader("🤖 Ask a Bible Question")
 user_question = st.text_input("Ask about meaning, context, or interpretation:")
 
-if user_question:
-    with st.spinner("Reflecting thoughtfully..."):
-        system_prompt = f"""
-You are a wise and compassionate AI Bible assistant. Answer all responses in {language}. 
-You help users understand the Bible’s meaning, structure, authors, historical context, and spiritual themes in simple and encouraging language.
-"""
-        
-        messages = [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_question}
-        ] 
-        
-        response = client.chat.completions.create(
-            model="gpt-3.5-turbo",
-            messages=messages,
-            temperature=0.7
-        )
+translated_answer = original_answer
 
-        st.markdown("### 📘 Answer")
-        st.write(response.choices[0].message.content.strip())
+if language != "English":
+    translation_prompt = f"Translate this to {language}:\n\n{original_answer}"
+    translation_response = client.chat.completions.create(
+        model="gpt-3.5-turbo",
+        messages=[{"role": "user", "content": translation_prompt}],
+        temperature=0.3
+    )
+    translated_answer = translation_response.choices[0].message.content.strip()
+
+st.markdown("### 📘 Answer")
+st.write(translated_answer)
 
         # 🚦 Your Streamlit app content ends here
 
