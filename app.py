@@ -24,7 +24,7 @@ logo = Image.open("nm2tech_logo.png")
 col1, col2, col3 = st.columns([1, 2, 1])
 with col2:
     st.image("nm2tech_logo.png", width=200)
-        st.markdown("""
+    st.markdown("""
         <h1 style='color:#003f63;'>💻 NM2TECH AI Bible Assistant</h1>
         <p style='font-size:18px;'>Explore scripture or ask Bible-related questions using AI eg: "Histocial fact abot bible"</p>
     """, unsafe_allow_html=True)
