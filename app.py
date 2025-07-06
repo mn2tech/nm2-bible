@@ -13,6 +13,7 @@ load_dotenv()
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
 from PIL import Image  # Only needed once
+st.image("nm2tech_logo.png", width=200)
 st.set_page_config(
     page_title="📖 NM2TECH AI Bible Assistant",          # Shown in browser tab
     page_icon="📘",                           # Emoji or a custom .png/.ico path
