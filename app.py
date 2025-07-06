@@ -44,10 +44,9 @@ if verse_input:
             original_verse = data['text']
             translated_verse = original_verse
 
-            # 🌍 Translate if needed
             if language != "English":
                 try:
-                    translation_prompt = f"Please translate the following Bible verse into {language}:\n\n{original_verse}"
+                    translation_prompt = f"Translate this Bible verse into {language}:\n\n{original_verse}"
                     translation_response = client.chat.completions.create(
                         model="gpt-3.5-turbo",
                         messages=[{"role": "user", "content": translation_prompt}],
@@ -58,7 +57,13 @@ if verse_input:
                     st.warning("⚠️ Translation failed. Showing verse in English.")
                     st.exception(e)
 
-            st.write(translated_verse)
+            # 🌍 Show both versions
+            st.markdown("**📝 English:**")
+            st.write(original_verse)
+
+            if language != "English":
+                st.markdown(f"**🌐 {language}:**")
+                st.write(translated_verse)
 
         else:
             st.error("⚠️ Verse not found. Try formatting like 'John 3:16'.")
