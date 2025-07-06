@@ -8,6 +8,12 @@ from PIL import Image
 load_dotenv()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
+# 🖼️ Load and Display Logo at the Top Center
+logo = Image.open("nm2tech_logo.png")
+col1, col2, col3 = st.columns([1, 2, 1])
+with col2:
+    st.image(logo, use_column_width=False)
+
 # 🌐 Page Configuration
 st.set_page_config(page_title="NM2TECH AI Bible Assistant", page_icon="💻", layout="centered")
 
