@@ -4,8 +4,13 @@ import openai
 
 # 🔑 Your GPT Key
 import os
+from dotenv import load_dotenv
+
+# 🔐 Load environment variables from .env file
+load_dotenv()
+
+# ✅ Access your secret key safely
 openai.api_key = os.getenv("OPENAI_API_KEY")
-#openai.api_key = "sk-proj-.."  # Replace with your actual key
 
 st.set_page_config(page_title="Bible AI Assistant", page_icon="📘")
 from PIL import Image  # Only needed once
