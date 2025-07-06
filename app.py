@@ -17,9 +17,6 @@ with col2:
 # 🌐 Page Configuration
 st.set_page_config(page_title="NM2TECH AI Bible Assistant", page_icon="💻", layout="centered")
 
-# 🎯 Language Selector
-language = st.selectbox("🌍 Choose Language:", ["English", "Hindi", "Telugu"])
-
 # 🧠 Page Header
 st.markdown("""
     <h1 style='text-align:center; color:#003f63;'>💻 NM2TECH AI Bible Assistant</h1>
@@ -32,6 +29,7 @@ st.subheader("📜 Verse Lookup")
 version = st.selectbox("Choose Bible Version:", ["KJV", "ASV", "WEB"])
 verse_input = st.text_input("Enter a Bible reference (e.g. John 3:16, Psalm 23):")
 
+verse_lang = st.selectbox("🌍 Select Verse Language:", ["English", "Hindi", "Spanish", "French"], key="verse_lang")
 if verse_input:
     with st.spinner("Searching for scripture..."):
         api_url = f"https://bible-api.com/{verse_input}?translation={version.lower()}"
@@ -44,7 +42,7 @@ if verse_input:
             original_verse = data['text']
             translated_verse = original_verse
 
-            if language != "English":
+            if verse_lang != "English":
                 try:
                     translation_prompt = f"Translate this Bible verse into {language}:\n\n{original_verse}"
                     translation_response = client.chat.completions.create(
