@@ -2,3 +2,4 @@ streamlit
 openai
 python-dotenv
 Pillow
+streamlit_js_eval
