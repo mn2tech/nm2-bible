@@ -12,9 +12,9 @@ import uuid
 # 🌟 Stripe donation links
 def launch_checkout(tier):
     links = {
-        "supporter": "https://buy.stripe.com/test_28E3cu0Xr5rC5dT3gfds401",
-        "sustainer": "https://buy.stripe.com/test_6oUfZg7lP6vGgWB043ds402",
-        "patron":    "https://buy.stripe.com/test_aFacN46hLbQ0ayd4kjds403"
+        "supporter": "https://buy.stripe.com/28EfZg6hD1Lk0zsg7pdZ602",
+        "sustainer": "https://buy.stripe.com/00w14m5dz4Xw1Dw8EXdZ601",
+        "patron":    "https://buy.stripe.com/7sYeVcdK50Hgbe63kDdZ600"
     }
     selected_link = links.get(tier)
     if selected_link:
