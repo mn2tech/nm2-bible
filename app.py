@@ -95,7 +95,7 @@ for msg in st.session_state["messages"]:
         st.markdown(msg["content"])
 
 # --- Input ---
-prompt = st.chat_input("Ask a Bible question or request a sermon...")
+prompt = st.chat_input("Ask a Bible question or request a sermon — start a conversation with Scripture.")
 
 if prompt:
     if st.session_state["tokens"] <= 0:
