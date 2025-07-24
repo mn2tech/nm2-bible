@@ -1,4 +1,6 @@
+# Environment variables
 .env
+# Cache and Python artifacts
 __pycache__/
-*.DS_Store
-session_logs.json
+*.pyc
+.streamlit/secrets.toml

@@ -4,3 +4,5 @@ python-dotenv
 Pillow
 textblob
 streamlit-js-eval
+supabase
+
