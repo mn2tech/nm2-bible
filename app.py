@@ -12,6 +12,66 @@ client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 # --- Streamlit Config ---
 st.set_page_config(page_title="NM2 Bible Chat", layout="centered")
 
+# --- Inject Custom Styling ---
+st.markdown("""
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Inter:wght@400;600&display=swap');
+
+html, body, [class*="css"] {
+    font-family: 'Inter', sans-serif;
+    background-color: #f9f7f6;
+    color: #333;
+}
+
+h1 {
+    font-family: 'Playfair Display', serif;
+    color: #594f4f;
+    text-align: center;
+}
+
+.stMarkdown p {
+    font-size: 1.05rem;
+    line-height: 1.6;
+}
+
+div[data-testid="stChatMessage"] {
+    border-radius: 10px;
+    padding: 0.75em;
+    background-color: #fff;
+    border: 1px solid #eee;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+}
+
+a {
+    color: #0055a4;
+    text-decoration: none;
+}
+
+a:hover {
+    color: #d9a400;
+    text-decoration: underline;
+}
+
+.verse-box {
+    background-color: #fff6e6;
+    padding: 1em;
+    margin-top: 1em;
+    border-left: 6px solid #d9a400;
+    font-style: italic;
+    font-family: 'Playfair Display', serif;
+    text-align: center;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+}
+
+.donation-cta {
+    text-align: center;
+    font-size: 0.95em;
+    color: #666;
+    margin-bottom: 1em;
+}
+</style>
+""", unsafe_allow_html=True)
+
 # --- Session state setup ---
 if "messages" not in st.session_state:
     st.session_state.messages = []
@@ -25,7 +85,7 @@ This tool was built with prayer and purpose — to guide hearts, encourage refle
 
 # --- Donation Banner ---
 st.markdown("""
-<div style='text-align: center; font-size: 0.9em; color: #555; margin-bottom: 1em;'>
+<div class='donation-cta'>
 If this ministry blesses you, consider <a href='https://buy.stripe.com/28EfZg6hD1Lk0zsg7pdZ602' target='_blank'>supporting our mission</a>.  
 Your gift helps us serve more hearts through the Word.
 </div>
@@ -47,7 +107,7 @@ verses_with_teaching = [
     }
 ]
 chosen = random.choice(verses_with_teaching)
-st.markdown(f"<div style='text-align: center; font-style: italic; color: #555;'>{chosen['verse']}</div>", unsafe_allow_html=True)
+st.markdown(f"<div class='verse-box'>{chosen['verse']}</div>", unsafe_allow_html=True)
 with st.expander("📖 Teach me more"):
     st.markdown(chosen["teaching"])
 with st.expander("🙏 A short prayer"):
@@ -57,15 +117,12 @@ with st.expander("🙏 A short prayer"):
     Thank You for being near, even in silence. Amen.
     """)
 
-# --- Chat Message History ---
-for i, msg in enumerate(st.session_state.messages):
-    message(msg["content"], is_user=(msg["role"] == "user"), key=str(i))
-
 # --- Chat Input ---
-prompt = st.chat_input("Ask a Bible question or request a sermon:")
+prompt = st.chat_input("What’s on your heart today?")
 if prompt:
     st.session_state.messages.append({"role": "user", "content": prompt})
     history = [{"role": m["role"], "content": m["content"]} for m in st.session_state.messages]
+
     with st.spinner("📖 Listening for heavenly wisdom..."):
         completion = client.chat.completions.create(
             model="gpt-3.5-turbo",
@@ -73,13 +130,19 @@ if prompt:
             temperature=0.7,
         )
         response = completion.choices[0].message.content
+
     st.session_state.messages.append({"role": "assistant", "content": response})
 
-st.markdown("""
+# --- Message History ---
+with st.container():
+    for i, msg in enumerate(st.session_state.messages):
+        message(msg["content"], is_user=(msg["role"] == "user"), key=str(i))
 
+# --- Footer ---
+st.markdown("""
 <div style='text-align: center; font-size: 0.8em; color: gray;'>
-    Designed by <a href="https://nm2tech.com" target="_blank" style="color: inherit;">NM2TECH</a> • 
-    Powered by <a href="https://wordministriesofindia.org" target="_blank" style="color: inherit;">Word Ministries of India Inc.</a><br>
-    <em>To God be the glory.</em>
+    Designed by <a href="https://nm2tech.com" target="_blank">NM2TECH</a> • 
+    Powered by <a href="https://wordministriesofindia.org" target="_blank">Word Ministries of India Inc.</a><br>
+    <em>To God be the glory. Your questions are a sacred offering — thank you for sharing.</em>
 </div>
 """, unsafe_allow_html=True)
