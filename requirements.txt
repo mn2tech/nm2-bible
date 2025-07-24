@@ -5,4 +5,5 @@ Pillow
 textblob
 streamlit-js-eval
 supabase
+streamlit-chat
 
