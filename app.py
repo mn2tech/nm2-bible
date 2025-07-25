@@ -7,7 +7,8 @@ import random
 import requests
 import feedparser
 import streamlit.components.v1 as components
-from bs4 import BeautifulSoup  # Image parsing from RSS summaries
+from bs4 import BeautifulSoup
+import time  # <-- Add this line
 
 # --- Load environment variables ---
 load_dotenv()
@@ -74,7 +75,12 @@ if "messages" not in st.session_state:
     st.session_state.messages = []
 
 # --- Tabs ---
-tab1, tab2, tab3, tab4 = st.tabs(["📖 Bible Chat", "📰 Bible News", "🎬 Bible Reading Room", "Prayer Room"])
+tab1, tab2, tab3, tab4 = st.tabs([
+    "📖 Bible Chat",
+    "📰 Bible News",
+    "📖 Bible Reading Room",  # Changed icon from 🎬 to 📖
+    "Prayer Room"
+])
 
 # --- Tab 1: Bible Chat Experience ---
 with tab1:
@@ -173,7 +179,6 @@ with tab2:
     # --- Tab 3: Christian Media ---
 with tab3:
     st.subheader("📖 Bible Reading Room")
-
     st.markdown("""
     <div class='donation-cta'>
     A quiet place to linger with Scripture — read, reflect, and let the Word dwell richly.
@@ -182,7 +187,6 @@ with tab3:
 
     # --- Full Book-Chapter Map ---
     book_chapters = {
-        # (include all 66 books from previous step)
         "Genesis": 50, "Exodus": 40, "Leviticus": 27, "Numbers": 36, "Deuteronomy": 34,
         "Joshua": 24, "Judges": 21, "Ruth": 4, "1 Samuel": 31, "2 Samuel": 24,
         "1 Kings": 22, "2 Kings": 25, "1 Chronicles": 29, "2 Chronicles": 36,
@@ -203,52 +207,117 @@ with tab3:
     book = st.selectbox("Choose a Book", list(book_chapters.keys()))
     chapter = st.number_input("Choose Chapter", min_value=1, max_value=book_chapters[book], value=1)
 
-    # --- Optional Donation Link ---
-    st.link_button("Support This Sanctuary", url="https://buy.stripe.com/28EfZg6hD1Lk0zsg7pdZ602")
+    # --- Display Selected Book and Chapter ---
+    st.markdown(f"### {book} {int(chapter)}")
+
+    # Fetch and display full Bible text using Bible API with typing effect
+    api_url = f"https://bible-api.com/{book}%20{int(chapter)}"
+    response = requests.get(api_url)
+    if response.status_code == 200:
+        data = response.json()
+        verses = data.get("verses", [])
+        all_verses = "<br>".join(
+            f"<b>{verse['verse']}.</b> {verse['text']}" for verse in verses
+        )
+        st.markdown(
+            f"<div class='verse-box'>{all_verses}</div>",
+            unsafe_allow_html=True
+        )
+        st.success("All verses displayed.")
+    else:
+        st.info("Unable to fetch Bible text. Please check your internet connection or try another book/chapter.")
 
 with tab4:
     st.header("🙏 Prayer Room")
 
-    # --- Prayer Sound Selection ---
     sound_map = {
-        "None": "",
         "Gentle Bell": "single-church-bell-2-352062.mp3",
-        "Worship Music": "soft_piano.mp3",
-        "Psalm 23": "psalm_23.mp3",
-        "Psalm 121": "psalm_121.mp3"
+        "Worship Music": "silent-evening-calm-piano-335749.mp3"
     }
-    sound_choice = st.selectbox("🔔 Choose End Sound", list(sound_map.keys()))
+    sound_choice = st.selectbox("🔔 Choose Prayer Music", list(sound_map.keys()), index=1)  # Worship Music is default
     sound_file = sound_map.get(sound_choice)
 
-    # --- Prayer Duration Slider ---
     duration_minutes = st.slider("Set Prayer Time (minutes)", 1, 60, 5)
     duration_seconds = duration_minutes * 60
 
-    # --- Prayer Countdown Button ---
+    # Option to play music during prayer
+    play_music = st.checkbox("Play music while praying", value=False)
+
+    # Show music player for manual play before countdown
+    if play_music and sound_file:
+        st.audio(sound_file, format="audio/mp3")
+        st.info("Click the play button above to start your prayer music.")
+
+    # Option to play Lord's Prayer during prayer
+    play_lords_prayer = st.checkbox("Play Lord's Prayer while praying", value=False)
+
+    # Show Lord's Prayer audio player for manual play before countdown
+    if play_lords_prayer:
+        st.audio("audio_The_Lords_Prayer.mp3", format="audio/mp3")
+        st.info("Click the play button above to listen to the Lord's Prayer during your prayer.")
+
     if st.button("Start Countdown"):
-        countdown_html = f"""
-        <div style="text-align:center;">
-            <h2 style="color:#4caf50;">🕊️ Prayer Countdown</h2>
-            <div id="countdown" style="font-size:48px; font-weight:bold;"></div>
-        </div>
+        import time
 
-        <script>
-            let timeLeft = {duration_seconds};
-            let countdownEl = document.getElementById("countdown");
+        st.markdown("""
+        <style>
+        .main, .block-container { padding: 0 !important; }
+        header, footer, [data-testid="stSidebar"] { display: none !important; }
+        .fullscreen-countdown {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: #f9f7f6;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            z-index: 9999;
+        }
+        .fullscreen-countdown h1 {
+            font-size: 10vw;
+            color: #4caf50;
+            text-align: center;
+            margin: 0;
+        }
+        .gentle-message {
+            font-size: 1.6rem;
+            color: #594f4f;
+            margin-top: 2vw;
+            text-align: center;
+            max-width: 700px;
+            font-family: 'Playfair Display', serif;
+            font-style: italic;
+        }
+        </style>
+        """, unsafe_allow_html=True)
 
-            function updateCountdown() {{
-                let minutes = Math.floor(timeLeft / 60);
-                let seconds = timeLeft % 60;
-                countdownEl.textContent = `${{minutes}}:${{seconds.toString().padStart(2, '0')}}`;
-                timeLeft--;
-                if (timeLeft < 0) {{
-                    countdownEl.textContent = "🕊️ Complete";
-                    clearInterval(timer);
-                }}
-            }}
+        gentle_message = (
+            "<b>Please take a moment to focus on God and His presence.</b><br>"
+            "Every burden you carry—each worry, pain, or fear—is like a rock, some heavy, some small.<br>"
+            "One by one, lay them down at His feet.<br>"
+            "Release them into His hands.<br><br>"
+            "<b>You are free.</b><br>"
+            "Let His peace carry you. Let His love hold you.<br>"
+            "He never meant for you to carry it all alone."
+        )
 
-            updateCountdown();
-            let timer = setInterval(updateCountdown, 1000);
-        </script>
-        """
-        components.html(countdown_html, height=200)
+        countdown_placeholder = st.empty()
+        for t in range(duration_seconds, -1, -1):
+            mins, secs = divmod(t, 60)
+            countdown_placeholder.markdown(
+                f"""
+                <div class='fullscreen-countdown'>
+                    <h1>{mins}:{secs:02d}</h1>
+                    <div class='gentle-message'>{gentle_message}</div>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+            time.sleep(1)
+        # Show "Complete" message only (no music at end)
+        countdown_placeholder.markdown(
+            f"""
+            <div class='fullscreen-countdown'>
+                <h1>🕊️ Complete</h1>
+                <div class='gentle-message'>{gentle_message}</div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
