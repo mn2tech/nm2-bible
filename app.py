@@ -4,6 +4,10 @@ from openai import OpenAI
 from dotenv import load_dotenv
 import os
 import random
+import requests
+import feedparser
+import streamlit.components.v1 as components
+from bs4 import BeautifulSoup  # Image parsing from RSS summaries
 
 # --- Load environment variables ---
 load_dotenv()
@@ -12,28 +16,24 @@ client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 # --- Streamlit Config ---
 st.set_page_config(page_title="NM2 Bible Chat", layout="centered")
 
-# --- Inject Custom Styling ---
+# --- Custom Styling ---
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Inter:wght@400;600&display=swap');
-
 html, body, [class*="css"] {
     font-family: 'Inter', sans-serif;
     background-color: #f9f7f6;
     color: #333;
 }
-
 h1 {
     font-family: 'Playfair Display', serif;
     color: #594f4f;
     text-align: center;
 }
-
 .stMarkdown p {
     font-size: 1.05rem;
     line-height: 1.6;
 }
-
 div[data-testid="stChatMessage"] {
     border-radius: 10px;
     padding: 0.75em;
@@ -41,20 +41,17 @@ div[data-testid="stChatMessage"] {
     border: 1px solid #eee;
     box-shadow: 0 2px 6px rgba(0,0,0,0.04);
 }
-
 a {
     color: #0055a4;
     text-decoration: none;
 }
-
 a:hover {
     color: #d9a400;
     text-decoration: underline;
 }
-
 .verse-box {
     background-color: #fff6e6;
-    color: #594f4f;  /* Ensures visibility in light mode */
+    color: #594f4f;
     padding: 1em;
     margin-top: 1em;
     border-left: 6px solid #d9a400;
@@ -63,17 +60,6 @@ a:hover {
     text-align: center;
     box-shadow: 0 2px 12px rgba(0,0,0,0.05);
 }
-
-/* 🌙 Dark mode override */
-@media (prefers-color-scheme: dark) {
-    .verse-box {
-        background-color: #2f2f2f;
-        color: #f9f7f6;  /* Light text for dark background */
-        border-left: 6px solid #d9a400;
-        box-shadow: none;
-    }
-}
-
 .donation-cta {
     text-align: center;
     font-size: 0.95em;
@@ -83,77 +69,186 @@ a:hover {
 </style>
 """, unsafe_allow_html=True)
 
-# --- Session state setup ---
+# --- Session State ---
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# --- App Header ---
-st.title("NM2 Bible Chat")
-st.markdown("""
-Welcome, beloved seeker.  
-This tool was built with prayer and purpose — to guide hearts, encourage reflection, and honor God's Word.
-""")
+# --- Tabs ---
+tab1, tab2, tab3, tab4 = st.tabs(["📖 Bible Chat", "📰 Bible News", "🎬 Bible Reading Room", "Prayer Room"])
 
-# --- Donation Banner ---
-st.markdown("""
-<div class='donation-cta'>
-If this ministry blesses you, consider <a href='https://buy.stripe.com/28EfZg6hD1Lk0zsg7pdZ602' target='_blank'>supporting our mission</a>.  
-Your gift helps us serve more hearts through the Word.
-</div>
-""", unsafe_allow_html=True)
+# --- Tab 1: Bible Chat Experience ---
+with tab1:
+    st.title("NM2 Bible Chat")
+    st.markdown("Welcome, beloved seeker. This tool was built with prayer and purpose — to guide hearts, encourage reflection, and honor God's Word.")
 
-# --- Verse of the Day + Teaching + Prayer ---
-verses_with_teaching = [
-    {
-        "verse": "“Trust in the Lord with all your heart and lean not on your own understanding.” — Proverbs 3:5",
-        "teaching": "Divine wisdom runs deeper than logic. Trust requires surrender — not silence, but strength."
-    },
-    {
-        "verse": "“The Lord is my shepherd; I shall not want.” — Psalm 23:1",
-        "teaching": "God’s care is constant. His presence provides even when provision seems absent."
-    },
-    {
-        "verse": "“Let the peace of Christ rule in your hearts.” — Colossians 3:15",
-        "teaching": "Peace isn't passive — it's the holy authority of calm amidst chaos."
-    }
-]
-chosen = random.choice(verses_with_teaching)
-st.markdown(f"<div class='verse-box'>{chosen['verse']}</div>", unsafe_allow_html=True)
-with st.expander("📖 Teach me more"):
-    st.markdown(chosen["teaching"])
-with st.expander("🙏 A short prayer"):
     st.markdown("""
-    Lord, may Your Word take root in my heart today.  
-    Guide me, teach me, and help me walk with grace.  
-    Thank You for being near, even in silence. Amen.
-    """)
+    <div class='donation-cta'>
+    If this ministry blesses you, consider <a href='https://buy.stripe.com/28EfZg6hD1Lk0zsg7pdZ602' target='_blank'>supporting our mission</a>.  
+    Your gift helps us serve more hearts through the Word.
+    </div>
+    """, unsafe_allow_html=True)
 
-# --- Chat Input ---
-prompt = st.chat_input("What’s on your heart today?")
-if prompt:
-    st.session_state.messages.append({"role": "user", "content": prompt})
-    history = [{"role": m["role"], "content": m["content"]} for m in st.session_state.messages]
+    verses = [
+        {
+            "verse": "“Trust in the Lord with all your heart and lean not on your own understanding.” — Proverbs 3:5",
+            "teaching": "Divine wisdom runs deeper than logic. Trust requires surrender — not silence, but strength."
+        },
+        {
+            "verse": "“The Lord is my shepherd; I shall not want.” — Psalm 23:1",
+            "teaching": "God’s care is constant. His presence provides even when provision seems absent."
+        },
+        {
+            "verse": "“Let the peace of Christ rule in your hearts.” — Colossians 3:15",
+            "teaching": "Peace isn't passive — it's the holy authority of calm amidst chaos."
+        }
+    ]
+    chosen = random.choice(verses)
+    st.markdown(f"<div class='verse-box'>{chosen['verse']}</div>", unsafe_allow_html=True)
+    with st.expander("📖 Teach me more"):
+        st.markdown(chosen["teaching"])
+    with st.expander("🙏 A short prayer"):
+        st.markdown("""Lord, may Your Word take root in my heart today.  
+        Guide me, teach me, and help me walk with grace.  
+        Thank You for being near, even in silence. Amen.""")
 
-    with st.spinner("📖 Listening for heavenly wisdom..."):
-        completion = client.chat.completions.create(
-            model="gpt-3.5-turbo",
-            messages=history,
-            temperature=0.7,
-        )
+    prompt = st.chat_input("What’s on your heart today?")
+    if prompt:
+        st.session_state.messages.append({"role": "user", "content": prompt})
+        history = [{"role": m["role"], "content": m["content"]} for m in st.session_state.messages]
+        with st.spinner("📖 Listening for heavenly wisdom..."):
+            completion = client.chat.completions.create(
+                model="gpt-3.5-turbo",
+                messages=history,
+                temperature=0.7,
+            )
         response = completion.choices[0].message.content
+        st.session_state.messages.append({"role": "assistant", "content": response})
 
-    st.session_state.messages.append({"role": "assistant", "content": response})
-
-# --- Message History ---
-with st.container():
     for i, msg in enumerate(st.session_state.messages):
         message(msg["content"], is_user=(msg["role"] == "user"), key=str(i))
 
-# --- Footer ---
-st.markdown("""
-<div style='text-align: center; font-size: 0.8em; color: gray;'>
-    Designed by <a href="https://nm2tech.com" target="_blank">NM2TECH</a> • 
-    Powered by <a href="https://wordministriesofindia.org" target="_blank">Word Ministries of India Inc.</a><br>
-    <em>To God be the glory. Your questions are a sacred offering — thank you for sharing.</em>
-</div>
-""", unsafe_allow_html=True)
+# --- Tab 2: Bible News with Embedded Images ---
+with tab2:
+    st.subheader("📰 Global Bible News & Updates")
+    feed_urls = [
+        "https://harbingersdaily.com/feed/",
+        "https://livinghisword.org/feed/",
+        "https://www.crosswalk.com/rss/feeds/headlines.xml"
+    ]
+
+    def fetch_feed_items(url, max_items=3):
+        feed = feedparser.parse(url)
+        return feed.entries[:max_items]
+
+    for url in feed_urls:
+        items = fetch_feed_items(url)
+        for item in items:
+            title = item.title
+            link = item.link
+            summary_html = item.summary if "summary" in item else ""
+            soup = BeautifulSoup(summary_html, "html.parser")
+
+            # --- Extract image if available ---
+            img_tag = soup.find("img")
+            img_url = img_tag["src"] if img_tag and img_tag.get("src") else None
+            summary_text = soup.get_text()[:200] + "..." if summary_html else ""
+
+            # --- News Card ---
+            st.markdown("""
+            <div style='padding:1em; margin-bottom:1.5em; background-color:#fff; border:1px solid #eee; border-radius:10px; box-shadow:0 2px 6px rgba(0,0,0,0.05);'>
+            """, unsafe_allow_html=True)
+
+            if img_url:
+                st.image(img_url, use_container_width=True)
+
+            st.markdown(f"**{title}**", unsafe_allow_html=True)
+            st.markdown(summary_text)
+            st.markdown(f"<a href='{link}' target='_blank'>Read more →</a>", unsafe_allow_html=True)
+            st.markdown("</div>", unsafe_allow_html=True)
+
+    st.markdown("---")
+    st.markdown("🙏 *Let every headline remind us to pray and act with hope.*")
+    st.link_button("Give with Grace", url="https://buy.stripe.com/28EfZg6hD1Lk0zsg7pdZ602")
+
+    # --- Tab 3: Christian Media ---
+with tab3:
+    st.subheader("📖 Bible Reading Room")
+
+    st.markdown("""
+    <div class='donation-cta'>
+    A quiet place to linger with Scripture — read, reflect, and let the Word dwell richly.
+    </div>
+    """, unsafe_allow_html=True)
+
+    # --- Full Book-Chapter Map ---
+    book_chapters = {
+        # (include all 66 books from previous step)
+        "Genesis": 50, "Exodus": 40, "Leviticus": 27, "Numbers": 36, "Deuteronomy": 34,
+        "Joshua": 24, "Judges": 21, "Ruth": 4, "1 Samuel": 31, "2 Samuel": 24,
+        "1 Kings": 22, "2 Kings": 25, "1 Chronicles": 29, "2 Chronicles": 36,
+        "Ezra": 10, "Nehemiah": 13, "Esther": 10, "Job": 42, "Psalms": 150,
+        "Proverbs": 31, "Ecclesiastes": 12, "Song of Solomon": 8, "Isaiah": 66,
+        "Jeremiah": 52, "Lamentations": 5, "Ezekiel": 48, "Daniel": 12,
+        "Hosea": 14, "Joel": 3, "Amos": 9, "Obadiah": 1, "Jonah": 4, "Micah": 7,
+        "Nahum": 3, "Habakkuk": 3, "Zephaniah": 3, "Haggai": 2, "Zechariah": 14,
+        "Malachi": 4, "Matthew": 28, "Mark": 16, "Luke": 24, "John": 21,
+        "Acts": 28, "Romans": 16, "1 Corinthians": 16, "2 Corinthians": 13,
+        "Galatians": 6, "Ephesians": 6, "Philippians": 4, "Colossians": 4,
+        "1 Thessalonians": 5, "2 Thessalonians": 3, "1 Timothy": 6, "2 Timothy": 4,
+        "Titus": 3, "Philemon": 1, "Hebrews": 13, "James": 5, "1 Peter": 5,
+        "2 Peter": 3, "1 John": 5, "2 John": 1, "3 John": 1, "Jude": 1, "Revelation": 22
+    }
+
+    # --- Select Book and Chapter ---
+    book = st.selectbox("Choose a Book", list(book_chapters.keys()))
+    chapter = st.number_input("Choose Chapter", min_value=1, max_value=book_chapters[book], value=1)
+
+    # --- Optional Donation Link ---
+    st.link_button("Support This Sanctuary", url="https://buy.stripe.com/28EfZg6hD1Lk0zsg7pdZ602")
+
+with tab4:
+    st.header("🙏 Prayer Room")
+
+    # --- Prayer Sound Selection ---
+    sound_map = {
+        "None": "",
+        "Gentle Bell": "single-church-bell-2-352062.mp3",
+        "Worship Music": "soft_piano.mp3",
+        "Psalm 23": "psalm_23.mp3",
+        "Psalm 121": "psalm_121.mp3"
+    }
+    sound_choice = st.selectbox("🔔 Choose End Sound", list(sound_map.keys()))
+    sound_file = sound_map.get(sound_choice)
+
+    # --- Prayer Duration Slider ---
+    duration_minutes = st.slider("Set Prayer Time (minutes)", 1, 60, 5)
+    duration_seconds = duration_minutes * 60
+
+    # --- Prayer Countdown Button ---
+    if st.button("Start Countdown"):
+        countdown_html = f"""
+        <div style="text-align:center;">
+            <h2 style="color:#4caf50;">🕊️ Prayer Countdown</h2>
+            <div id="countdown" style="font-size:48px; font-weight:bold;"></div>
+        </div>
+
+        <script>
+            let timeLeft = {duration_seconds};
+            let countdownEl = document.getElementById("countdown");
+
+            function updateCountdown() {{
+                let minutes = Math.floor(timeLeft / 60);
+                let seconds = timeLeft % 60;
+                countdownEl.textContent = `${{minutes}}:${{seconds.toString().padStart(2, '0')}}`;
+                timeLeft--;
+                if (timeLeft < 0) {{
+                    countdownEl.textContent = "🕊️ Complete";
+                    clearInterval(timer);
+                }}
+            }}
+
+            updateCountdown();
+            let timer = setInterval(updateCountdown, 1000);
+        </script>
+        """
+        components.html(countdown_html, height=200)
