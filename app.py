@@ -54,6 +54,7 @@ a:hover {
 
 .verse-box {
     background-color: #fff6e6;
+    color: #594f4f;  /* Ensures visibility in light mode */
     padding: 1em;
     margin-top: 1em;
     border-left: 6px solid #d9a400;
@@ -61,6 +62,16 @@ a:hover {
     font-family: 'Playfair Display', serif;
     text-align: center;
     box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+}
+
+/* 🌙 Dark mode override */
+@media (prefers-color-scheme: dark) {
+    .verse-box {
+        background-color: #2f2f2f;
+        color: #f9f7f6;  /* Light text for dark background */
+        border-left: 6px solid #d9a400;
+        box-shadow: none;
+    }
 }
 
 .donation-cta {
