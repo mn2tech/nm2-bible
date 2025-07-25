@@ -7,4 +7,5 @@ streamlit-js-eval
 supabase
 streamlit-chat
 feedparser
+beautifulsoup4
 
