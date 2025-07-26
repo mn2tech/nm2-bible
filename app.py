@@ -15,7 +15,7 @@ load_dotenv()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 # --- Streamlit Config ---
-st.set_page_config(page_title="NM2 Bible Chat", layout="centered")
+st.set_page_config(page_title="NM2 Bible Chat (Beta)", layout="centered")
 
 # --- Custom Styling ---
 st.markdown("""
@@ -67,6 +67,29 @@ a:hover {
     color: #666;
     margin-bottom: 1em;
 }
+.comment-card {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    padding: 1em 1.2em;
+    margin-bottom: 1.2em;
+    font-family: 'Inter', sans-serif;
+}
+.comment-meta {
+    color: #7c7c7c;
+    font-size: 0.98em;
+    margin-bottom: 0.3em;
+    font-family: 'Inter', sans-serif;
+}
+.comment-actions {
+    margin-top: 0.5em;
+}
+body, .stApp {
+    background-image: url('prayer.png');
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center center;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -75,11 +98,13 @@ if "messages" not in st.session_state:
     st.session_state.messages = []
 
 # --- Tabs ---
-tab1, tab2, tab3, tab4 = st.tabs([
-    "📖 Bible Chat",
+tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
+    "📖 Bible Chat (Beta)",
     "📰 Bible News",
-    "📖 Bible Reading Room",  # Changed icon from 🎬 to 📖
-    "Prayer Room"
+    "📖 Bible Reading Room",
+    "🙏 Prayer Room",         # ← Prayer hands emoji
+    "📆 Daily Devotional",   # ← Calendar emoji
+    "💬 Comments"
 ])
 
 # --- Tab 1: Bible Chat Experience ---
@@ -228,10 +253,11 @@ with tab3:
         st.info("Unable to fetch Bible text. Please check your internet connection or try another book/chapter.")
 
 with tab4:
+    # st.image("prayer.png", use_container_width=True)  # <-- Remove or comment out this line
     st.header("🙏 Prayer Room")
 
     sound_map = {
-        "Gentle Bell": "single-church-bell-2-352062.mp3",
+        "Calm Music": "silent-evening-calm-piano-335749.mp3",  # Renamed from Gentle Bell to Calm Music
         "Worship Music": "silent-evening-calm-piano-335749.mp3"
     }
     sound_choice = st.selectbox("🔔 Choose Prayer Music", list(sound_map.keys()), index=1)  # Worship Music is default
@@ -289,13 +315,10 @@ with tab4:
         """, unsafe_allow_html=True)
 
         gentle_message = (
-            "<b>Please take a moment to focus on God and His presence.</b><br>"
-            "Every burden you carry—each worry, pain, or fear—is like a rock, some heavy, some small.<br>"
-            "One by one, lay them down at His feet.<br>"
-            "Release them into His hands.<br><br>"
-            "<b>You are free.</b><br>"
-            "Let His peace carry you. Let His love hold you.<br>"
-            "He never meant for you to carry it all alone."
+            "<b>🔥 Come As You Are </b><br>"
+            "Why set a timer to meet God? Because stillness rarely finds us on its own—we must choose it. In these few minutes, time won’t race past. It will settle. It will breathe.<br>"
+            "Don’t ask. Just be. Let your heart rest in His presence.<br>"
+            "It doesn’t matter what burdens you carry or what mistakes you made today—come as you are. God already knows. What He desires most is your presence."
         )
 
         countdown_placeholder = st.empty()
@@ -321,3 +344,112 @@ with tab4:
             """,
             unsafe_allow_html=True
         )
+
+# --- Tab 5: Daily Devotional ---
+with tab5:
+    st.header("Daily Devotional (Our Daily Bread)")
+
+    feed_url = "https://odb.org/feed/"
+    feed = feedparser.parse(feed_url)
+
+    if feed.entries:
+        for entry in feed.entries[:3]:  # Show the latest 3 devotionals
+            st.subheader(entry.title)
+            st.markdown(f"_{entry.published}_")
+            st.markdown(entry.summary, unsafe_allow_html=True)
+            st.markdown(f"[Read more]({entry.link})")
+            st.markdown("---")
+    else:
+        st.info("Unable to fetch devotionals. Please try again later.")
+
+    # --- Add the latest Our Daily Bread video ---
+    st.subheader("Watch Today's Devotional")
+    st.video("https://www.youtube.com/watch?v=Qw3R8b6qQ1A")  # Replace with the latest video URL if needed
+
+# --- Tab 6: Comments and Feedback ---
+with tab6:
+    st.header("💬 Community Comments & Reflections")
+
+    # Modern comment input area
+    st.markdown("""
+    <style>
+    .comment-card {
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        padding: 1em 1.2em;
+        margin-bottom: 1.2em;
+        font-family: 'Inter', sans-serif;
+    }
+    .comment-meta {
+        color: #7c7c7c;
+        font-size: 0.98em;
+        margin-bottom: 0.3em;
+        font-family: 'Inter', sans-serif;
+    }
+    .comment-actions {
+        margin-top: 0.5em;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+    if "comments" not in st.session_state:
+        st.session_state.comments = []  # Each comment: {"name": ..., "text": ...}
+
+    if "edit_index" not in st.session_state:
+        st.session_state.edit_index = None
+
+    # --- Input fields for name and comment ---
+    col_name, col_comment = st.columns([1, 3])
+    with col_name:
+        name = st.text_input("Your Name", key="comment_name")
+    with col_comment:
+        comment = st.text_area("Share your thoughts, prayers, or encouragement:", key="comment_input")
+
+    if st.button("Post Comment"):
+        if comment.strip():
+            st.session_state.comments.append({"name": name.strip() or "Anonymous", "text": comment.strip()})
+            st.success("Thank you for sharing!")
+            st.rerun()
+
+    st.markdown("#### Recent Comments:")
+
+    for idx, c in enumerate(reversed(st.session_state.comments[-10:])):
+        real_idx = len(st.session_state.comments) - 1 - idx  # Actual index in the list
+
+        st.markdown("<div class='comment-card'>", unsafe_allow_html=True)
+        if st.session_state.edit_index == real_idx:
+            st.markdown("<div class='comment-meta'><b>Edit your comment</b></div>", unsafe_allow_html=True)
+            new_name = st.text_input("Edit your name:", value=c["name"], key=f"edit_name_{real_idx}")
+            new_text = st.text_area("Edit your comment:", value=c["text"], key=f"edit_{real_idx}")
+            col1, col2 = st.columns(2)
+            with col1:
+                if st.button("Save", key=f"save_{real_idx}"):
+                    st.session_state.comments[real_idx] = {"name": new_name, "text": new_text}
+                    st.session_state.edit_index = None
+                    st.success("Comment updated!")
+                    st.rerun()
+            with col2:
+                if st.button("Cancel", key=f"cancel_{real_idx}"):
+                    st.session_state.edit_index = None
+                    st.rerun()
+        else:
+            st.markdown(f"<div class='comment-meta'><b>{c['name']}</b></div>", unsafe_allow_html=True)
+            st.markdown(f"<div>{c['text']}</div>", unsafe_allow_html=True)
+            cols = st.columns([0.1, 0.9])
+            with cols[0]:
+                if st.button("✏️", key=f"edit_btn_{real_idx}"):
+                    st.session_state.edit_index = real_idx
+                    st.rerun()
+            with cols[1]:
+                st.code(c["text"], language="")
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    st.markdown("---")
+    st.markdown("🙏 *Thank you for helping us grow and improve this ministry.*")
+
+st.markdown("""
+<div style='background-color:#e3e7ff; color:#2a2a6c; padding:0.8em 1em; border-radius:8px; border:1px solid #b3b8e0; margin-bottom:1.5em; text-align:center; font-weight:600; font-size:1.1em;'>
+🚧 <span style='color:#d97706;'>NM2 Bible Assistant is in <b>BETA</b></span> — Features may change. Thank you for your feedback and prayers!
+</div>
+""", unsafe_allow_html=True)
