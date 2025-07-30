@@ -9,6 +9,22 @@ import feedparser
 import streamlit.components.v1 as components
 from bs4 import BeautifulSoup
 import time  # <-- Add this line
+import streamlit as st
+import json
+
+
+COMMENTS_FILE = "comments.json"
+
+def load_comments():
+    try:
+        with open(COMMENTS_FILE, "r") as f:
+            return json.load(f)
+    except:
+        return []
+
+def save_comments(comments):
+    with open(COMMENTS_FILE, "w") as f:
+        json.dump(comments, f, indent=2)
 
 # --- Load environment variables ---
 load_dotenv()
@@ -362,91 +378,84 @@ with tab5:
     else:
         st.info("Unable to fetch devotionals. Please try again later.")
 
-    # --- Add the latest Our Daily Bread video ---
-    st.subheader("Watch Today's Devotional")
-    st.video("https://www.youtube.com/watch?v=Qw3R8b6qQ1A")  # Replace with the latest video URL if needed
-
 # --- Tab 6: Comments and Feedback ---
 with tab6:
+    from supabase_utils import add_comment, get_comments, update_comment, delete_comment
+
     st.header("💬 Community Comments & Reflections")
 
-    # Modern comment input area
-    st.markdown("""
-    <style>
-    .comment-card {
-        background: #fff;
-        border-radius: 12px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-        padding: 1em 1.2em;
-        margin-bottom: 1.2em;
-        font-family: 'Inter', sans-serif;
-    }
-    .comment-meta {
-        color: #7c7c7c;
-        font-size: 0.98em;
-        margin-bottom: 0.3em;
-        font-family: 'Inter', sans-serif;
-    }
-    .comment-actions {
-        margin-top: 0.5em;
-    }
-    </style>
-    """, unsafe_allow_html=True)
+    # Session state tracking
+    if "my_comment_ids" not in st.session_state:
+        st.session_state.my_comment_ids = []
+    if "edit_id" not in st.session_state:
+        st.session_state.edit_id = None
+    if "delete_id" not in st.session_state:
+        st.session_state.delete_id = None
 
-    if "comments" not in st.session_state:
-        st.session_state.comments = []  # Each comment: {"name": ..., "text": ...}
-
-    if "edit_index" not in st.session_state:
-        st.session_state.edit_index = None
-
-    # --- Input fields for name and comment ---
+    # --- Input form ---
     col_name, col_comment = st.columns([1, 3])
     with col_name:
-        name = st.text_input("Your Name", key="comment_name")
+        name = st.text_input("Your Name", key="supabase_name")
     with col_comment:
-        comment = st.text_area("Share your thoughts, prayers, or encouragement:", key="comment_input")
+        comment = st.text_area("Share your thoughts, prayers, or encouragement:", key="supabase_input")
 
     if st.button("Post Comment"):
         if comment.strip():
-            st.session_state.comments.append({"name": name.strip() or "Anonymous", "text": comment.strip()})
-            st.success("Thank you for sharing!")
+            comment_id = add_comment(name.strip() or "Anonymous", comment.strip())
+            st.session_state.my_comment_ids.append(comment_id)
+            st.success("✅ Thank you for sharing!")
             st.rerun()
 
-    st.markdown("#### Recent Comments:")
+    st.markdown("#### ✨ Recent Comments")
+    comments = get_comments()
 
-    for idx, c in enumerate(reversed(st.session_state.comments[-10:])):
-        real_idx = len(st.session_state.comments) - 1 - idx  # Actual index in the list
-
+    for c in comments:
+        is_mine = c["id"] in st.session_state.my_comment_ids
         st.markdown("<div class='comment-card'>", unsafe_allow_html=True)
-        if st.session_state.edit_index == real_idx:
-            st.markdown("<div class='comment-meta'><b>Edit your comment</b></div>", unsafe_allow_html=True)
-            new_name = st.text_input("Edit your name:", value=c["name"], key=f"edit_name_{real_idx}")
-            new_text = st.text_area("Edit your comment:", value=c["text"], key=f"edit_{real_idx}")
+
+        if st.session_state.edit_id == c["id"]:
+            st.markdown(f"<div class='comment-meta'><b>Editing as {c['name']}</b></div>", unsafe_allow_html=True)
+            new_text = st.text_area("Edit your comment:", value=c["text"], key=f"edit_text_{c['id']}")
             col1, col2 = st.columns(2)
             with col1:
-                if st.button("Save", key=f"save_{real_idx}"):
-                    st.session_state.comments[real_idx] = {"name": new_name, "text": new_text}
-                    st.session_state.edit_index = None
-                    st.success("Comment updated!")
+                if st.button("💾 Save", key=f"save_{c['id']}"):
+                    update_comment(c["id"], new_text)
+                    st.session_state.edit_id = None
+                    st.success("✏️ Comment updated!")
                     st.rerun()
             with col2:
-                if st.button("Cancel", key=f"cancel_{real_idx}"):
-                    st.session_state.edit_index = None
+                if st.button("❌ Cancel", key=f"cancel_{c['id']}"):
+                    st.session_state.edit_id = None
                     st.rerun()
         else:
-            st.markdown(f"<div class='comment-meta'><b>{c['name']}</b></div>", unsafe_allow_html=True)
+            st.markdown(f"<div class='comment-meta'><b>{c['name']}</b> • {c['created_at']}</div>", unsafe_allow_html=True)
             st.markdown(f"<div>{c['text']}</div>", unsafe_allow_html=True)
-            cols = st.columns([0.1, 0.9])
+
+            # --- Action buttons (Edit, Share, Delete) ---
+            cols = st.columns([0.2, 0.2, 0.2, 0.4])
             with cols[0]:
-                if st.button("✏️", key=f"edit_btn_{real_idx}"):
-                    st.session_state.edit_index = real_idx
-                    st.rerun()
+                if is_mine and st.button("✏️ Edit", key=f"edit_{c['id']}"):
+                    st.session_state.edit_id = c["id"]
             with cols[1]:
-                st.code(c["text"], language="")
+                if st.button("🔗 Share", key=f"share_{c['id']}"):
+                    st.code(c["text"], language="")
+                    st.toast("Copied to clipboard!")
+            with cols[2]:
+                if is_mine and st.button("🗑️ Delete", key=f"delete_{c['id']}"):
+                    st.session_state.delete_id = c["id"]
+
         st.markdown("</div>", unsafe_allow_html=True)
+
+    # Handle deferred delete outside loop
+    if st.session_state.delete_id is not None:
+        delete_comment(st.session_state.delete_id)
+        st.success("🗑️ Comment deleted!")
+        st.session_state.delete_id = None
+        st.rerun()
 
     st.markdown("---")
     st.markdown("🙏 *Thank you for helping us grow and improve this ministry.*")
+
 
 st.markdown("""
 <div style='background-color:#e3e7ff; color:#2a2a6c; padding:0.8em 1em; border-radius:8px; border:1px solid #b3b8e0; margin-bottom:1.5em; text-align:center; font-weight:600; font-size:1.1em;'>
