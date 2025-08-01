@@ -10,7 +10,14 @@ supabase = create_client(url, key)
 
 def add_comment(name, text):
     result = supabase.table("comments").insert({"name": name, "text": text}).execute()
-    return result.data[0]["id"] if result.data else None
+    print("🔍 Supabase insert result:", result.data)  # Debug line
+    if result.data and len(result.data) > 0:
+        comment_id = result.data[0]["id"]
+        print("✅ Comment ID returned:", comment_id)  # Debug line
+        return comment_id
+    else:
+        print("❌ No data returned from Supabase")  # Debug line
+        return None
 
 def get_comments():
     response = supabase.table("comments").select("*").order("created_at", desc=True).limit(20).execute()
