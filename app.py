@@ -533,6 +533,14 @@ with tab6:
         st.session_state.edit_id = None
     if "delete_id" not in st.session_state:
         st.session_state.delete_id = None
+    if "clear_comment_fields" not in st.session_state:
+        st.session_state.clear_comment_fields = False
+
+    # --- Clear fields BEFORE widgets are rendered ---
+    if st.session_state.clear_comment_fields:
+        st.session_state["supabase_input"] = ""
+        st.session_state["supabase_name"] = ""
+        st.session_state.clear_comment_fields = False
 
     # --- Input form ---
     col_name, col_comment = st.columns([1, 3])
@@ -550,11 +558,12 @@ with tab6:
                 st.info(f"🔍 Debug: Your comment IDs: {st.session_state.my_comment_ids}")
             else:
                 st.error("❌ Failed to save comment. Please try again.")
+            st.session_state.clear_comment_fields = True
             st.rerun()
 
     st.markdown("#### ✨ Recent Comments")
     comments = get_comments()
-    
+
     # Debug info
     if st.session_state.my_comment_ids:
         st.info(f"🔍 Your comment IDs this session: {st.session_state.my_comment_ids}")
